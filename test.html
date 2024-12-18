@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baccarat Conservative Strategy</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        input[type="text"], button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .output {
+            padding: 10px;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            margin-top: 30px;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Baccarat Conservative Strategy</h1>
+    <div class="input-group">
+        <label for="outcome">Enter the Outcome (B for Banker / P for Player):</label>
+        <input type="text" id="outcome" placeholder="Enter 'B' or 'P'">
+    </div>
+    <button onclick="suggestBet()">Get Best Bet</button>
+    <button onclick="resetGame()">Restart</button>
+    
+    <div class="output" id="suggestion"></div>
+
+    <h2>Bet History</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Round</th>
+                <th>Suggested Bet</th>
+                <th>Outcome</th>
+                <th>Bet Amount ($)</th>
+                <th>Bankroll ($)</th>
+                <th>Win/Loss</th>
+            </tr>
+        </thead>
+        <tbody id="historyTable">
+            <!-- History of bets will be displayed here -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    let consecutiveCount = 0;
+    let previousOutcome = "";
+    let bankroll = 1000;  // Starting bankroll
+    let initialBet = 10;
+    let currentBet = initialBet;
+    let lossStreak = 0;
+    let roundCounter = 1;  // To track round numbers
+    let suggestedBet = "";  // Track the bet suggested by the strategy
+
+    function suggestBet() {
+        const outcome = document.getElementById('outcome').value.trim().toLowerCase();
+        const suggestionDiv = document.getElementById('suggestion');
+        const historyTable = document.getElementById('historyTable');
+
+        if (outcome !== "b" && outcome !== "p") {
+            suggestionDiv.innerHTML = "Please enter 'B' for Banker or 'P' for Player as the outcome.";
+            return;
+        }
+
+        // Reset for the first entry or after losing 3 rounds in a row
+        if (lossStreak >= 3) {
+            lossStreak = 0;
+            consecutiveCount = 0;  // Reset streak
+            suggestionDiv.innerHTML = "3 consecutive losses detected. Pausing betting.";
+            return;
+        }
+
+        // Check streak
+        if (previousOutcome === outcome) {
+            consecutiveCount++;
+        } else {
+            consecutiveCount = 1;
+        }
+
+        // Betting logic based on streaks
+        if (consecutiveCount >= 3) {
+            // Conservative Mode: Bet more during streaks
+            currentBet = Math.min(initialBet * consecutiveCount, bankroll * 0.05); // Cap at 5% of bankroll
+            suggestedBet = outcome === 'b' ? 'Banker' : 'Player';
+            suggestionDiv.innerHTML = `Bet on ${suggestedBet} with a bet of $${currentBet.toFixed(2)}.`;
+        } else {
+            // Choppy Mode: Flat betting
+            currentBet = initialBet;
+            suggestedBet = "Banker";
+            suggestionDiv.innerHTML = `Bet on Banker with a flat bet of $${currentBet.toFixed(2)}.`;
+        }
+
+        // Simulate outcome
+        let winAmount = 0;
+        let winOrLoss = "Loss";
+
+        if (outcome === "b" && suggestedBet === "Banker") {
+            // Banker bet: 0.95 payout due to 5% commission
+            winAmount = 0.95 * currentBet;
+            winAmount = winAmount + currentBet;  // Banker win
+            winOrLoss = "Win";
+        } else if (outcome === "p" && suggestedBet === "Player") {
+            // Player bet: 1.00 payout
+            winAmount = currentBet;
+            winAmount = winAmount + currentBet;  // Player win
+            winOrLoss = "Win";
+        }
+
+        // Update bankroll based on win/loss
+        bankroll += winAmount - currentBet;
+
+        // Store previous outcome
+        previousOutcome = outcome;
+
+        // Add the bet details to the history table
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td>${roundCounter}</td>
+            <td>${suggestedBet}</td>
+            <td>${outcome === 'b' ? 'Banker' : 'Player'}</td>
+            <td>${currentBet.toFixed(2)}</td>
+            <td>${bankroll.toFixed(2)}</td>
+            <td>${winOrLoss}</td>
+        `;
+        historyTable.appendChild(newRow);
+
+        roundCounter++;  // Increment the round number
+    }
+
+    function resetGame() {
+        // Reset all variables and the game state
+        bankroll = 1000;
+        currentBet = initialBet;
+        consecutiveCount = 0;
+        previousOutcome = "";
+        lossStreak = 0;
+        roundCounter = 1;
+        suggestedBet = "";
+
+        // Clear input and output
+        document.getElementById('outcome').value = "";
+        document.getElementById('suggestion').innerHTML = "";
+
+        // Clear the history table
+        document.getElementById('historyTable').innerHTML = "";
+    }
+</script>
+
+</body>
+</html>
